@@ -1,0 +1,6 @@
+Flask==3.0.3
+# AI / NLP — sentiment analysis. If these aren't installed (or no internet to
+# fetch model weights), the app automatically falls back to a built-in lexicon
+# analyzer, so it runs regardless.
+transformers>=4.44
+torch>=2.5.1

@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+
+# Database
+backend/data/*.db
+backend/data/*.sqlite3
+
+# Model / package caches
+.cache/
+*.log
+
+#Readme files
+COMMIT_STREAK_GUIDE.md
