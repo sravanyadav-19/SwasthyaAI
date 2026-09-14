@@ -90,7 +90,16 @@ def analyze():
 
 @app.route("/api/history")
 def history():
-    limit = min(int(request.args.get("limit", 30)), 100)
+    # Bound history reads so an invalid or huge query cannot crash the route
+    # or request an unnecessary amount of private journal data.
+    raw_limit = request.args.get("limit", "30")
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        return jsonify({"error": "limit must be a whole number between 1 and 100."}), 400
+    if not 1 <= limit <= 100:
+        return jsonify({"error": "limit must be a whole number between 1 and 100."}), 400
+
     with get_db() as conn:
         rows = conn.execute(
             "SELECT id, text, sentiment, mood, confidence, engine, created_at "
