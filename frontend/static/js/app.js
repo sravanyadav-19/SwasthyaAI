@@ -25,9 +25,10 @@ async function analyze() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Something went wrong.");
     renderResult(data);
-    loadHistory();
+    setStatus("Your reflection has been analyzed.", "success");
+    await loadHistory();
   } catch (err) {
-    alert(err.message);
+    setStatus(err.message, "error");
   } finally {
     $("analyzeBtn").disabled = false;
     $("btnText").textContent = "Analyze my mood";
@@ -50,18 +51,27 @@ function renderResult(d) {
     : "🧠 local sentiment engine";
   badge.classList.remove("d-none");
 
-  $("suggestions").innerHTML = d.suggestions
-    .map((s) => `<li>${s}</li>`)
-    .join("");
+  // Suggestions come from an API response. Build text nodes instead of
+  // injecting response content as HTML into the page.
+  const suggestions = $("suggestions");
+  suggestions.replaceChildren();
+  (Array.isArray(d.suggestions) ? d.suggestions : []).forEach((suggestion) => {
+    const item = document.createElement("li");
+    item.textContent = suggestion;
+    suggestions.appendChild(item);
+  });
 }
 
 async function loadHistory() {
   try {
     const res = await fetch("/api/history?limit=30");
-    const rows = await res.json();
-    renderDashboard(rows.reverse()); // chronological for the chart
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Unable to load mood history.");
+    renderDashboard(data.reverse()); // chronological for the chart
+    setStatus("Mood history updated.", "success");
   } catch (e) {
     console.warn("history load failed", e);
+    setStatus(e.message, "error");
   }
 }
 
@@ -127,6 +137,13 @@ function drawChart(rows) {
       },
     },
   });
+}
+
+function setStatus(message, tone = "success") {
+  const status = $("appStatus");
+  if (!status) return;
+  status.textContent = message;
+  status.className = `app-status ${tone}`;
 }
 
 function escapeHtml(str) {
