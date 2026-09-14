@@ -29,9 +29,12 @@
       <!-- Journal + result -->
       <div class="col-lg-7">
         <div class="card-well glass">
-          <label class="field-label">✍️ Today's journal entry</label>
-          <textarea id="journal" class="form-control journal" rows="5"
-            placeholder="e.g. I felt a bit overwhelmed this morning, but a walk helped me calm down..."></textarea>
+          <label class="field-label" for="journal">✍️ Today's journal entry</label>
+          <textarea id="journal" aria-describedby="journalHint" class="form-control journal" rows="5"
+            placeholder="e.g. I felt a bit overwhelmed this morning, but a walk helped me calm down..."
+            maxlength="2000"></textarea>
+          <div id="journalHint" class="form-text">Your entry is analyzed locally and limited to 2,000 characters.</div>
+          <div id="appStatus" class="app-status" role="status" aria-live="polite"></div>
           <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
             <button id="analyzeBtn" class="btn btn-leaf px-4">
               <span id="btnText">Analyze my mood</span>
@@ -69,7 +72,7 @@
         <div class="card-well glass h-100">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <h5 class="dash-title m-0">📊 Mood dashboard</h5>
-            <button id="refreshBtn" class="btn btn-sm btn-outline-leaf">Refresh</button>
+            <button id="refreshBtn" class="btn btn-sm btn-outline-leaf" type="button">Refresh</button>
           </div>
           <div class="row text-center g-2 mb-3">
             <div class="col-4"><div class="stat"><span id="statCount">0</span><label>Entries</label></div></div>
@@ -93,5 +96,5 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3ad16022c006115',t:'MTc4OTM2NDczMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
