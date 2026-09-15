@@ -38,22 +38,39 @@ NEGATIONS = {"not", "no", "never", "dont", "doesn't", "didnt", "cant",
 
 
 def _lexicon_score(text: str) -> Dict[str, Any]:
-    words = re.findall(r"[a-z']+", text.lower())
+    # Keep tokenization deterministic so the offline fallback behaves the same
+    # in development, tests, and deployments without downloaded model weights.
+    normalized = re.sub(r"[^a-z'\s]", " ", text.lower())
+    words = re.findall(r"[a-z']+", normalized)
+    phrases = [f"{words[i]} {words[i + 1]}" for i in range(len(words) - 1)]
     pos = neg = 0
-    for i, w in enumerate(words):
-        # check for a negation in the previous token
+    consumed = set()
+
+    # Match multi-word vocabulary entries first (for example, "fed up").
+    for index, phrase in enumerate(phrases):
+        if phrase in POSITIVE_WORDS or phrase in NEGATIVE_WORDS:
+            consumed.update({index, index + 1})
+            prev = words[index - 1] if index > 0 else ""
+            weight = -1 if prev in NEGATIONS else 1
+            if phrase in POSITIVE_WORDS:
+                pos += 1 if weight == 1 else 0
+                neg += 1 if weight == -1 else 0
+            else:
+                neg += 1 if weight == 1 else 0
+                pos += 1 if weight == -1 else 0
+
+    for i, word in enumerate(words):
+        if i in consumed:
+            continue
+        # A negation immediately before a word flips its polarity.
         prev = words[i - 1] if i > 0 else ""
         weight = -1 if prev in NEGATIONS else 1
-        if w in POSITIVE_WORDS:
-            if weight == -1:
-                neg += 1
-            else:
-                pos += 1
-        elif w in NEGATIVE_WORDS:
-            if weight == -1:
-                pos += 1
-            else:
-                neg += 1
+        if word in POSITIVE_WORDS:
+            pos += 1 if weight == 1 else 0
+            neg += 1 if weight == -1 else 0
+        elif word in NEGATIVE_WORDS:
+            neg += 1 if weight == 1 else 0
+            pos += 1 if weight == -1 else 0
 
     total = pos + neg
     if total == 0:
