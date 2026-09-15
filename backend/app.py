@@ -61,6 +61,17 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/health")
+def health():
+    """Return a small readiness response without analyzing or storing text."""
+    return jsonify({
+        "status": "ok",
+        "service": "SwasthyaAI",
+        "analyzer_engine": analyzer.engine,
+        "database": "sqlite",
+    })
+
+
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
     data = request.get_json(silent=True) or {}
