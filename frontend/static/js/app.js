@@ -4,6 +4,15 @@ const $ = (id) => document.getElementById(id);
 let chart = null;
 
 const SENT_COLOR = { positive: "#2f9e6e", neutral: "#f2c14e", negative: "#e8836b" };
+const MAX_JOURNAL_LENGTH = 2000;
+
+function updateCharacterCount() {
+  const journal = $("journal");
+  const counter = $("charCount");
+  if (!journal || !counter) return;
+  counter.textContent = `${journal.value.length} / ${MAX_JOURNAL_LENGTH}`;
+  counter.classList.toggle("text-danger", journal.value.length >= MAX_JOURNAL_LENGTH);
+}
 
 async function analyze() {
   const text = $("journal").value.trim();
@@ -153,4 +162,6 @@ function escapeHtml(str) {
 
 $("analyzeBtn").addEventListener("click", analyze);
 $("refreshBtn").addEventListener("click", loadHistory);
+$("journal").addEventListener("input", updateCharacterCount);
+updateCharacterCount();
 loadHistory();
