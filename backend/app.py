@@ -99,6 +99,14 @@ def analyze():
     return jsonify(result)
 
 
+@app.route("/api/history", methods=["DELETE"])
+def clear_history():
+    """Delete all locally stored journal entries when the user requests it."""
+    with get_db() as conn:
+        deleted = conn.execute("DELETE FROM entries").rowcount
+    return jsonify({"deleted": deleted})
+
+
 @app.route("/api/history")
 def history():
     # Bound history reads so an invalid or huge query cannot crash the route
