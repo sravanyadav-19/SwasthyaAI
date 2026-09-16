@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, render_template, request
@@ -31,11 +32,21 @@ app = Flask(
 
 
 # ── Database ────────────────────────────────────────────────────────────────
-def get_db() -> sqlite3.Connection:
+@contextmanager
+def get_db():
+    """Yield a SQLite connection and always release the file handle."""
     os.makedirs(DATA_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        yield conn
+    except Exception:
+        conn.rollback()
+        raise
+    else:
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def init_db() -> None:
