@@ -71,6 +71,24 @@ function renderResult(d) {
   });
 }
 
+async function clearHistory() {
+  if (!window.confirm("Delete all locally stored mood entries? This cannot be undone.")) return;
+
+  const button = $("clearHistoryBtn");
+  button.disabled = true;
+  try {
+    const res = await fetch("/api/history", { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Unable to clear mood history.");
+    renderDashboard([]);
+    setStatus(`${data.deleted} journal entr${data.deleted === 1 ? "y" : "ies"} deleted.`, "success");
+  } catch (e) {
+    setStatus(e.message, "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadHistory() {
   try {
     const res = await fetch("/api/history?limit=30");
@@ -162,6 +180,7 @@ function escapeHtml(str) {
 
 $("analyzeBtn").addEventListener("click", analyze);
 $("refreshBtn").addEventListener("click", loadHistory);
+$("clearHistoryBtn").addEventListener("click", clearHistory);
 $("journal").addEventListener("input", updateCharacterCount);
 updateCharacterCount();
 loadHistory();
