@@ -46,11 +46,15 @@ class SwasthyaApiTests(unittest.TestCase):
 
         history = self.client.get("/api/history")
         self.assertEqual(len(history.get_json()), 1)
+        entry_id = history.get_json()[0]["id"]
 
-        cleared = self.client.delete("/api/history")
-        self.assertEqual(cleared.status_code, 200)
-        self.assertEqual(cleared.get_json()["deleted"], 1)
+        deleted = self.client.delete(f"/api/history/{entry_id}")
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(deleted.get_json()["deleted"], entry_id)
         self.assertEqual(self.client.get("/api/history").get_json(), [])
+
+        missing = self.client.delete(f"/api/history/{entry_id}")
+        self.assertEqual(missing.status_code, 404)
 
 
 if __name__ == "__main__":
