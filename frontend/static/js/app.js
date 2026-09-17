@@ -89,6 +89,22 @@ async function clearHistory() {
   }
 }
 
+async function deleteHistoryEntry(entryId) {
+  if (!window.confirm("Delete this journal entry?")) return;
+
+  try {
+    const res = await fetch(`/api/history/${encodeURIComponent(entryId)}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Unable to delete this entry.");
+    setStatus("Journal entry deleted.", "success");
+    await loadHistory();
+  } catch (e) {
+    setStatus(e.message, "error");
+  }
+}
+
 async function loadHistory() {
   try {
     const res = await fetch("/api/history?limit=30");
@@ -114,9 +130,14 @@ function renderDashboard(rows) {
         <span class="hist-dot" style="background:${color}"></span>
         <span class="hist-text">${escapeHtml(snippet)}</span>
         <span class="hist-mood">${r.mood}</span>
+        <button class="delete-history-btn" type="button" data-entry-id="${r.id}" aria-label="Delete journal entry">×</button>
       </li>`;
     }).join("");
   }
+
+  ul.querySelectorAll(".delete-history-btn").forEach((button) => {
+    button.addEventListener("click", () => deleteHistoryEntry(button.dataset.entryId));
+  });
 
   // stats
   $("statCount").textContent = rows.length;
