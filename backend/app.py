@@ -118,6 +118,16 @@ def clear_history():
     return jsonify({"deleted": deleted})
 
 
+@app.route("/api/history/<int:entry_id>", methods=["DELETE"])
+def delete_history_entry(entry_id: int):
+    """Delete one local journal entry without disturbing the rest of history."""
+    with get_db() as conn:
+        cursor = conn.execute("DELETE FROM entries WHERE id = ?", (entry_id,))
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Journal entry not found."}), 404
+    return jsonify({"deleted": entry_id})
+
+
 @app.route("/api/history")
 def history():
     # Bound history reads so an invalid or huge query cannot crash the route
