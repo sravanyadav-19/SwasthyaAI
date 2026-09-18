@@ -31,6 +31,15 @@ app = Flask(
 )
 
 
+@app.after_request
+def add_security_headers(response):
+    """Keep private journal API responses out of browser/proxy caches."""
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 # ── Database ────────────────────────────────────────────────────────────────
 @contextmanager
 def get_db():
