@@ -51,6 +51,10 @@ function renderResult(d) {
   $("resultSentiment").textContent = d.sentiment;
   $("resultSentiment").style.color = SENT_COLOR[d.sentiment] || "#1f7a53";
   $("moodValue").textContent = d.mood;
+  const confidence = Number(d.confidence);
+  $("confidenceValue").textContent = Number.isFinite(confidence)
+    ? `analysis confidence ${Math.round(confidence * 100)}%`
+    : "analysis confidence unavailable";
 
   requestAnimationFrame(() => { $("moodBar").style.width = d.mood + "%"; });
 
