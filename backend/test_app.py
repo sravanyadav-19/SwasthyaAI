@@ -25,6 +25,8 @@ class SwasthyaApiTests(unittest.TestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "ok")
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
 
     def test_history_rejects_invalid_limit(self):
         response = self.client.get("/api/history?limit=not-a-number")
