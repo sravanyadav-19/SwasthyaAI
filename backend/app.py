@@ -10,12 +10,14 @@ Run:  python backend/app.py   (from the project root)
 
 from __future__ import annotations
 
+import csv
+import io
 import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
 from model import analyzer
 
@@ -117,6 +119,29 @@ def analyze():
         result["created_at"] = created
 
     return jsonify(result)
+
+
+@app.route("/api/history/export")
+def export_history():
+    """Export local mood history as a portable CSV file."""
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT created_at, sentiment, mood, confidence, engine, text "
+            "FROM entries ORDER BY id ASC"
+        ).fetchall()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["created_at", "sentiment", "mood", "confidence", "engine", "text"])
+    writer.writerows(
+        (row["created_at"], row["sentiment"], row["mood"], row["confidence"], row["engine"], row["text"])
+        for row in rows
+    )
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=swasthya-mood-history.csv"},
+    )
 
 
 @app.route("/api/history", methods=["DELETE"])
