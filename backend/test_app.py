@@ -32,6 +32,13 @@ class SwasthyaApiTests(unittest.TestCase):
         response = self.client.get("/api/history?limit=not-a-number")
         self.assertEqual(response.status_code, 400)
 
+    def test_history_export_returns_csv(self):
+        response = self.client.get("/api/history/export")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response.content_type)
+        self.assertIn("created_at,sentiment,mood", response.get_data(as_text=True))
+
+
     @patch.object(
         app_module.analyzer,
         "analyze",
