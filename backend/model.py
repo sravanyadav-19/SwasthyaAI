@@ -12,6 +12,7 @@ which one produced the result.
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Dict, Any
 
@@ -109,18 +110,25 @@ class MoodAnalyzer:
         self._pipeline = None
         self._tried = False
         self.engine = "lexicon"
+        self.model_name = os.getenv(
+            "SWASTHYA_HF_MODEL",
+            "distilbert-base-uncased-finetuned-sst-2-english",
+        )
+        self.offline_only = os.getenv("SWASTHYA_OFFLINE", "false").lower() == "true"
 
     def _load_model(self) -> bool:
         """Lazily try to load the HF pipeline. Returns True on success."""
         if self._tried:
             return self._pipeline is not None
         self._tried = True
+        if self.offline_only:
+            return False
         try:
             from transformers import pipeline  # type: ignore
 
             self._pipeline = pipeline(
                 "sentiment-analysis",
-                model="distilbert-base-uncased-finetuned-sst-2-english",
+                model=self.model_name,
             )
             self.engine = "huggingface"
             return True
