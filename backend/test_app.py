@@ -25,6 +25,8 @@ class SwasthyaApiTests(unittest.TestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "ok")
+        self.assertIn("model_name", response.get_json())
+        self.assertIn("offline_only", response.get_json())
         self.assertEqual(response.headers["Cache-Control"], "no-store")
         self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
 
