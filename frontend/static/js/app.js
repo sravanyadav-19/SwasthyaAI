@@ -16,29 +16,18 @@ function updateCharacterCount() {
 
 async function analyze() {
   const text = $("journal").value.trim();
-  if (!text) {
-    alert("Please write a few words about how you're feeling first.");
-    return;
-  }
-
+  if (!text) { setStatus("Please write a few words about how you're feeling first.", "error"); return; }
   $("analyzeBtn").disabled = true;
   $("btnText").textContent = "Analyzing…";
   $("btnSpinner").classList.remove("d-none");
-
   try {
-    const res = await fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    const data = analyzeLocally(text);
+    saveLocalEntry(data);
     renderResult(data);
-    setStatus("Your reflection has been analyzed.", "success");
+    setStatus("Your reflection was analyzed locally in this browser.", "success");
     await loadHistory();
-  } catch (err) {
-    setStatus(err.message, "error");
-  } finally {
+  } catch (err) { setStatus(err.message || "Unable to analyze this entry.", "error"); }
+  finally {
     $("analyzeBtn").disabled = false;
     $("btnText").textContent = "Analyze my mood";
     $("btnSpinner").classList.add("d-none");
@@ -75,51 +64,32 @@ function renderResult(d) {
   });
 }
 
+function exportHistory() {
+  try {
+    exportLocalEntries();
+    setStatus("Mood history exported from this browser.", "success");
+  } catch (e) {
+    setStatus("Unable to export mood history.", "error");
+  }
+}
+
 async function clearHistory() {
   if (!window.confirm("Delete all locally stored mood entries? This cannot be undone.")) return;
-
-  const button = $("clearHistoryBtn");
-  button.disabled = true;
-  try {
-    const res = await fetch("/api/history", { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Unable to clear mood history.");
-    renderDashboard([]);
-    setStatus(`${data.deleted} journal entr${data.deleted === 1 ? "y" : "ies"} deleted.`, "success");
-  } catch (e) {
-    setStatus(e.message, "error");
-  } finally {
-    button.disabled = false;
-  }
+  clearLocalEntries();
+  renderDashboard([]);
+  setStatus("All local journal entries deleted.", "success");
 }
 
 async function deleteHistoryEntry(entryId) {
   if (!window.confirm("Delete this journal entry?")) return;
-
-  try {
-    const res = await fetch(`/api/history/${encodeURIComponent(entryId)}`, {
-      method: "DELETE",
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Unable to delete this entry.");
-    setStatus("Journal entry deleted.", "success");
-    await loadHistory();
-  } catch (e) {
-    setStatus(e.message, "error");
-  }
+  deleteLocalEntry(entryId);
+  setStatus("Journal entry deleted from this browser.", "success");
+  await loadHistory();
 }
 
 async function loadHistory() {
-  try {
-    const res = await fetch("/api/history?limit=30");
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Unable to load mood history.");
-    renderDashboard(data.reverse()); // chronological for the chart
-    setStatus("Mood history updated.", "success");
-  } catch (e) {
-    console.warn("history load failed", e);
-    setStatus(e.message, "error");
-  }
+  try { renderDashboard(loadLocalEntries()); }
+  catch (e) { setStatus("Unable to load local mood history.", "error"); }
 }
 
 function renderDashboard(rows) {
@@ -205,6 +175,7 @@ function escapeHtml(str) {
 
 $("analyzeBtn").addEventListener("click", analyze);
 $("refreshBtn").addEventListener("click", loadHistory);
+$("exportHistoryBtn").addEventListener("click", exportHistory);
 $("clearHistoryBtn").addEventListener("click", clearHistory);
 $("journal").addEventListener("input", updateCharacterCount);
 updateCharacterCount();
