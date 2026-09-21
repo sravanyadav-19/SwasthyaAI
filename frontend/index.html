@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🪷 SwasthyaAI — Your Mental Wellness Companion</title>
+  <meta name="description" content="AI-powered emotional wellness: journal your feelings, track mood trends, get mindful suggestions." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="static/css/style.css" />
+
+  <style>
+    .privacy-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(15, 23, 42, 0.55); }
+    .privacy-card { max-width: 34rem; padding: 1.5rem; border-radius: 1rem; background: #fff; color: #1f2937; box-shadow: 0 1rem 3rem rgba(0,0,0,.2); }
+    .privacy-card h2 { margin-top: 0; }
+    .privacy-card button { border: 0; border-radius: .5rem; padding: .65rem 1rem; background: #2f9e6e; color: #fff; cursor: pointer; }
+    .privacy-card[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <section id="privacyNotice" class="privacy-backdrop" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" hidden>
+    <div class="privacy-card">
+      <h2 id="privacyTitle">Privacy-first beta</h2>
+      <p>Your journal entries are analyzed and stored only in this browser on this device. They are not uploaded to or saved on our server.</p>
+      <p>Clearing browser data, using private browsing, or changing devices may remove your history. Use Export CSV to keep a personal backup.</p>
+      <button id="privacyAccept" type="button">I understand</button>
+    </div>
+  </section>
+
+  <div class="page-glow"></div>
+
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <span class="brand">🪷 <strong>Swasthya</strong>AI</span>
+      <span class="tagline d-none d-sm-inline">Empowering mindful living</span>
+    </div>
+  </nav>
+
+  <main class="container py-4 py-md-5">
+    <!-- Hero -->
+    <header class="text-center mb-4 mb-md-5">
+      <h1 class="hero-title">How are you feeling <span>today?</span></h1>
+      <p class="hero-sub">Write a few honest lines. SwasthyaAI reflects your mood and suggests a small, kind next step.</p>
+    </header>
+
+    <div class="row g-4">
+      <!-- Journal + result -->
+      <div class="col-lg-7">
+        <div class="card-well glass">
+          <label class="field-label" for="journal">✍️ Today's journal entry</label>
+          <textarea id="journal" aria-describedby="journalHint" class="form-control journal" rows="5"
+            placeholder="e.g. I felt a bit overwhelmed this morning, but a walk helped me calm down..."
+            maxlength="2000"></textarea>
+          <div class="d-flex justify-content-between align-items-center">
+            <div id="journalHint" class="form-text">Your entry is analyzed locally and limited to 2,000 characters.</div>
+            <div id="charCount" class="form-text" aria-live="polite">0 / 2000</div>
+          </div>
+          <div id="appStatus" class="app-status" role="status" aria-live="polite"></div>
+          <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+            <button id="analyzeBtn" class="btn btn-leaf px-4">
+              <span id="btnText">Analyze my mood</span>
+              <span id="btnSpinner" class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+            <span id="engineBadge" class="engine-badge d-none"></span>
+          </div>
+        </div>
+
+        <!-- Result card (hidden until first analysis) -->
+        <div id="result" class="card-well glass result-card d-none mt-4">
+          <div class="d-flex align-items-center gap-3">
+            <div id="resultEmoji" class="result-emoji">😊</div>
+            <div>
+              <div class="result-label">You seem to be feeling</div>
+              <h3 id="resultSentiment" class="result-sentiment m-0">Positive</h3>
+            </div>
+            <div class="ms-auto text-end">
+              <div class="mood-number"><span id="moodValue">—</span><small>/100</small></div>
+              <div class="mood-caption">mood score</div>
+              <div id="confidenceValue" class="mood-caption">confidence —</div>
+            </div>
+          </div>
+
+          <div class="meter mt-3">
+            <div id="moodBar" class="meter-fill" style="width:0%"></div>
+          </div>
+
+          <h6 class="suggest-title mt-4">🌿 A few gentle suggestions</h6>
+          <ul id="suggestions" class="suggest-list"></ul>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="col-lg-5">
+        <div class="card-well glass h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h5 class="dash-title m-0">📊 Mood dashboard</h5>
+            <div class="d-flex gap-2">
+              <button id="refreshBtn" class="btn btn-sm btn-outline-leaf" type="button">Refresh</button>
+              <button id="exportHistoryBtn" class="btn btn-sm btn-outline-leaf" type="button">Export CSV</button>
+              <button id="clearHistoryBtn" class="btn btn-sm btn-outline-danger" type="button">Clear history</button>
+            </div>
+          </div>
+          <div class="row text-center g-2 mb-3">
+            <div class="col-4"><div class="stat"><span id="statCount">0</span><label>Entries</label></div></div>
+            <div class="col-4"><div class="stat"><span id="statAvg">—</span><label>Avg mood</label></div></div>
+            <div class="col-4"><div class="stat"><span id="statStreak">—</span><label>Latest</label></div></div>
+          </div>
+          <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
+          <h6 class="suggest-title mt-4">Recent entries</h6>
+          <ul id="history" class="history-list">
+            <li class="empty">No entries yet — your reflections will appear here.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-center mt-5 footer-note">
+      <p class="mb-1">💚 Your journal entries are stored privately in a local SQLite database.</p>
+      <p class="mb-0">SwasthyaAI is a wellness tool, not a substitute for professional mental-health care.</p>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="static/js/storage.js"></script>
+  <script src="static/js/analyzer.js"></script>
+  <script src="static/js/app.js"></script>
+  <script>
+    const privacyNotice = document.getElementById('privacyNotice');
+    const privacyAccept = document.getElementById('privacyAccept');
+    if (localStorage.getItem('swasthya-privacy-notice-seen') !== 'true') privacyNotice.hidden = false;
+    privacyAccept.addEventListener('click', () => {
+      localStorage.setItem('swasthya-privacy-notice-seen', 'true');
+      privacyNotice.hidden = true;
+    });
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3ad16022c006115',t:'MTc4OTM2NDczMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3b41ba9ab2e800d',t:'MTc4OTQzODM2Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3d1b95b484f17b0',t:'MTc4OTc0ODkwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3d9c56b09367f19',t:'MTc4OTgzMzI4OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e6908a9c677ee6',t:'MTc4OTk2NzQzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
